@@ -1,8 +1,12 @@
 import express from 'express';
 import fetch from 'node-fetch';
+import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Enable CORS
+app.use(cors());
 
 // Root route to display a simple message
 app.get('/', (req, res) => {
@@ -12,7 +16,6 @@ app.get('/', (req, res) => {
 // Endpoint to fetch languages from all repositories
 app.get('/github-languages', async (req, res) => {
     try {
-        // Fetch all repositories
         const response = await fetch('https://api.github.com/user/repos?type=all&per_page=100', {
             headers: {
                 Authorization: `Bearer ${process.env.GITHUB_TOKEN}`
@@ -25,7 +28,6 @@ app.get('/github-languages', async (req, res) => {
         const repos = await response.json();
         const languagesData = {};
 
-        // Fetch languages for each repository
         for (const repo of repos) {
             const languagesResponse = await fetch(repo.languages_url, {
                 headers: {
@@ -36,7 +38,6 @@ app.get('/github-languages', async (req, res) => {
             if (languagesResponse.ok) {
                 const repoLanguages = await languagesResponse.json();
                 for (const [language, count] of Object.entries(repoLanguages)) {
-                    // Aggregate the total byte count for each language across all repos
                     languagesData[language] = (languagesData[language] || 0) + count;
                 }
             } else {
