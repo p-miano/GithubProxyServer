@@ -1,15 +1,20 @@
-let cachedLanguagesData = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+import express from 'express';
+import fetch from 'node-fetch';
+import cors from 'cors';
 
+const app = express(); 
+const port = process.env.PORT || 5000;
+
+// Enable CORS
+app.use(cors());
+
+// Root route to display a simple message
+app.get('/', (req, res) => {
+    res.send('Welcome to the GitHub Proxy Server!');
+});
+
+// Endpoint to fetch languages from all repositories
 app.get('/github-languages', async (req, res) => {
-    const now = Date.now();
-    
-    if (cachedLanguagesData && (now - lastFetchTime < CACHE_DURATION)) {
-        // Return cached data if it's still valid
-        return res.json(cachedLanguagesData);
-    }
-
     try {
         const response = await fetch('https://api.github.com/user/repos?type=all&per_page=100', {
             headers: {
@@ -40,13 +45,13 @@ app.get('/github-languages', async (req, res) => {
             }
         }
 
-        // Cache the data and update the fetch time
-        cachedLanguagesData = languagesData;
-        lastFetchTime = now;
-
         res.json(languagesData);
     } catch (error) {
         console.error('Error fetching languages or repositories:', error);
         res.status(500).json({ error: 'Failed to fetch language data' });
     }
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
